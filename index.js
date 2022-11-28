@@ -43,7 +43,8 @@ async function run(){
             res.send(result)
         });
         app.get('/allbookings',async(req,res)=>{
-            const query={}
+            const query={ 
+            }
             const result=await bookingProduct.find(query).toArray()
             res.send(result)
         })
@@ -57,22 +58,38 @@ async function run(){
         app.post('/product',async(req,res)=>{
             const product=req.body;
             console.log(product)
-            const result=await addproductCollection.insertOne(product)
+            const result=await ProductCollection.insertOne(product)
           
             res.send(result)
 
         });
+       
+
+        app.get('/myproduct/:email',async(req,res)=>{
+            const email=req.params.email
+            const query={email}
+          
+            const result=await ProductCollection.find(query).toArray()
+            res.send(result)
+        })
       
-        app.delete('/allbookings/:id',async(req,res)=>{
+        app.delete('/usersbuyer/:id',async(req,res)=>{
             const id=req.params.id;
             const query={_id:ObjectId(id)}
          
-            const result=await bookingProduct.deleteOne(query)
+            const result=await userCollection.deleteOne(query)
             res.send(result)
         })
+      
         app.post('/users',async(req,res)=>{
             const users=req.body;
-            const result=await userCollection.insertOne(users)
+            const doc= {
+                role: "buyer",
+                email:users.email,
+                name:users.name
+               
+        }
+            const result=await userCollection.insertOne(doc)
          
             res.send(result)
         })
@@ -110,6 +127,13 @@ async function run(){
             const user=await userCollection.find(query).toArray()
             res.send(user);
         });
+        app.get('/Buyer',async(req,res)=>{
+            const query={
+                role:'buyer'
+            }
+            const user=await userCollection.find(query).toArray()
+            res.send(user);
+        });
         app.get('/users/admin/:email',async(req,res)=>{
             const email=req.params.email;
             const query={email}
@@ -124,8 +148,56 @@ async function run(){
             res.send({isSeller: user?.role==='seller'});
 
          })
+         
         
-      
+         app.put('/advertize/:id',async(req,res)=>{
+            const id=req.params.id;
+            const filter={_id:ObjectId(id)}
+            const options = { upsert: true };
+            const updateDoc = {
+                $set: {
+                    advertise:true
+                },
+              };
+       const result = await ProductCollection.updateOne(filter, updateDoc, options);
+       console.log(result)
+       res.send(result)
+        });
+        app.get('/advertize',async(req,res)=>{
+            const query={
+                advertise:true
+            }
+            const result=await ProductCollection.find(query).toArray()
+            res.send(result)
+        })
+        app.delete('/mybookings/:id',async(req,res)=>{
+            const id=req.params.id;
+            const query={_id:ObjectId(id)}
+         
+            const result=await bookingProduct.deleteOne(query)
+            res.send(result)
+        })
+        app.delete('/allseller/:id',async(req,res)=>{
+            const id=req.params.id;
+            const query={_id:ObjectId(id)}
+         
+            const result=await userCollection.deleteOne(query)
+            res.send(result)
+        });
+        app.delete('/myproduct/:id',async(req,res)=>{
+            const id=req.params.id;
+            const query={_id:ObjectId(id)}
+            console.log(query)
+         
+            const result=await ProductCollection.deleteOne(query)
+            res.send(result)
+        });
+        app.get('/ordersadd/:id',async(req,res)=>{
+            const id=req.params.id
+            const query={ _id: ObjectId(id)}
+            const booking=await bookingProduct.findOne(query)
+            res.send(booking)
+        })
        
 
     }
