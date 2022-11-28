@@ -240,13 +240,13 @@ async function run(){
                 }
             }
             const option={upsert:true}
-            // const updateResult=await bookingProduct.updateOne(filter,updatedDoc,option)
-            // const update=await ProductCollection.updateOne(filter,updatedDoc,option)
+            const updateResult=await bookingProduct.updateOne(filter,updatedDoc,option)
+            const update=await ProductCollection.updateOne(filter,updatedDoc,option)
             console.log('update', updateResult)
            res.send(result)
          })
          app.get('/soldbooking',async(req,res)=>{
-            const query={ 
+            const query={  
                 paid:true
             };
             const result=await bookingProduct.findOne(query)
