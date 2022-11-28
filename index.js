@@ -240,8 +240,8 @@ async function run(){
                 }
             }
             const option={upsert:true}
-            // const updateResult=await bookingProduct.updateOne(filter,updatedDoc,option)
-            // const update=await ProductCollection.updateOne(filter,updatedDoc,option)
+            const updateResult=await bookingProduct.updateOne(filter,updatedDoc,option)
+            const update=await ProductCollection.updateOne(filter,updatedDoc,option)
             console.log('update', updateResult)
            res.send(result)
          })
