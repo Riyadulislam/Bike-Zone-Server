@@ -4,6 +4,8 @@ require('dotenv').config()
 const app=express();
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const port=process.env.port || 5000;
+const stripe = require("stripe")('sk_test_51M7OM9A629pi4ZCRZtHSFXEqtA1yBhDg7jSOvwtfrZj9FANfzUsFRUdxypL1UdHFfZL5B488CRKmeA6yp9r8XYM800CcFuSjso')
+// console.log(stripe)
 
 
 app.use(cors());
@@ -11,8 +13,10 @@ app.use(express.json())
 
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@cluster0.1pxon9n.mongodb.net/?retryWrites=true&w=majority`;
-console.log(uri)
+
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
+
+
 async function run(){
     try{
         const categoryOptionproduct=client.db('BikeSell').collection('categoryOption');
@@ -20,6 +24,7 @@ async function run(){
         const bookingProduct=client.db('BikeSell').collection('bookings');
         const userCollection=client.db('BikeSell').collection('users');
         const addproductCollection=client.db('BikeSell').collection('addproduct');
+        const paymentsCollection=client.db('BikeSell').collection('payments');
         app.get('/category',async(req,res)=>{
             const query={}
             const result=await categoryOptionproduct.find(query).toArray()
@@ -42,6 +47,7 @@ async function run(){
             const result=await bookingProduct.find(query).toArray()
             res.send(result)
         });
+        
         app.get('/allbookings',async(req,res)=>{
             const query={ 
             }
@@ -187,17 +193,65 @@ async function run(){
         app.delete('/myproduct/:id',async(req,res)=>{
             const id=req.params.id;
             const query={_id:ObjectId(id)}
-            console.log(query)
+          
          
             const result=await ProductCollection.deleteOne(query)
             res.send(result)
         });
-        app.get('/ordersadd/:id',async(req,res)=>{
+        // app.get('/ordersadd/:id',async(req,res)=>{
+        //     const id=req.params.id
+        //     const query={ _id: ObjectId(id)}
+        //     const booking=await bookingProduct.findOne(query)
+        //     res.send(booking)
+        // })
+
+        app.get('/myBookingProduct/:id',async(req,res)=>{
             const id=req.params.id
-            const query={ _id: ObjectId(id)}
-            const booking=await bookingProduct.findOne(query)
-            res.send(booking)
+            const query={_id:ObjectId(id)}
+            const result =await bookingProduct.findOne(query)
+            res.send(result)
         })
+        app.post('/create-payment-intent',async(req,res)=>{
+            const booking=req.body;
+            const price=booking.price;
+            const amount=price*100;
+            const paymentIntent = await stripe.paymentIntents.create({
+                currency: "usd",
+                amount:amount,
+                "payment_method_types":[
+                    "card"
+                ]
+              });
+              res.send({
+                clientSecret: paymentIntent.client_secret,
+              });
+         })
+         app.post('/payments',async(req,res)=>{
+            const payment=req.body;
+            const result=await paymentsCollection.insertOne(payment)
+            const id=payment.bookingId
+            
+            const filter={_id:ObjectId(id)} 
+            const updatedDoc={
+                $set:{
+                    paid:true,
+                    transactionId:payment.transactionId
+      
+                }
+            }
+            const option={upsert:true}
+            // const updateResult=await bookingProduct.updateOne(filter,updatedDoc,option)
+            // const update=await ProductCollection.updateOne(filter,updatedDoc,option)
+            console.log('update', updateResult)
+           res.send(result)
+         })
+         app.get('/soldbooking',async(req,res)=>{
+            const query={ 
+                paid:true
+            };
+            const result=await bookingProduct.findOne(query)
+            res.send(result)
+         })
        
 
     }
